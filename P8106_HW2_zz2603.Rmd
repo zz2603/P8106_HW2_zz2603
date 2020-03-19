@@ -9,19 +9,58 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
+library(caret)
+library(splines)
+library(lasso2)
+library(mgcv)
+
 
 ```
 
 
 
 ```{r}
+college <- read_csv("./College.csv") %>% janitor::clean_names()
+
+train_college <- filter(college,college!="Columbia University")
+
+## matrix of predictors 
+x <- model.matrix(outstate~.,train_college)[,c(565:580)]
+
+## vector of response
+y <- train_college$outstate
 
 ```
 
+
+## (a) Create scatter plots of response vs. predictors.
+
+```{r}
+theme1 <- trellis.par.get()
+theme1$plot.symbol$col <- rgb(0.2,0.4,0.2,0.5)
+theme1$plot.symbol$pch <- 16
+theme1$plot.line$col <- rgb(0.8,0.1,0.1,0.1)
+theme1$plot.line$lwd <- 2
+theme1$strip.background$col <- rgb(0.0,0.2,0.6,0.2)
+trellis.par.set(theme1)
+featurePlot(x,y,plot="scatter",labels = c("","Y"),
+            type=c("p"),layout=c(4,4))
+
+```
+
+
+## (b) Fit a smoothing spline model using Terminal as the only predictor of Outstate for a range of degrees of freedom, as well as the degree of freedom obtained by generalized cross validation, and plot the resulting ﬁts. Describe the results obtained.
 
 
 ```{r}
 
+
+
 ```
+
+
+
+
+
 
 
