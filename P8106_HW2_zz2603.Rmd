@@ -36,7 +36,7 @@ y <- train_college$outstate
 
 ## (a) Create scatter plots of response vs. predictors.
 
-```{r}
+```{r fig.width=16,fig.height=16}
 theme1 <- trellis.par.get()
 theme1$plot.symbol$col <- rgb(0.2,0.4,0.2,0.5)
 theme1$plot.symbol$pch <- 16
@@ -180,5 +180,23 @@ According to the boxplot, the GAM (using caret) has smaller RMSE than the MARS d
 
 ## (e) Based on the above GAM and MARS models, predict the out-of-state tuition of Columbia University.
 
+```{r}
+columbia <-  filter(college,college=="Columbia University")
 
+x_col <- select(columbia,-c(college,outstate))
 
+pred_gam <- predict(gam.fit,newdata = x_col) ## using gam.fit by caret
+pred_gam
+pred_gam_m2 <- predict(gam.m2,newdata = x_col) ## using gam.m2
+pred_gam_m2
+pred_gam_m3 <- predict(gam.m3, newdata = x_col) ## using gam.m3
+pred_gam_m3
+
+pred_mars <- predict(mars.fit,newdata = x_col)
+pred_mars
+
+```
+
+Using the GAM, the predicted out-of-state tuition is `r pred_gam[[1]]` dollars.
+
+Using the MARS, the predicted out-of-state tuition is `r pred_mars[[1]]` dollars.
