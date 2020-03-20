@@ -169,6 +169,16 @@ p1
 ```
 
 
+```{r}
+bwplot(resamples(list(mars=mars.fit,
+                      gam=gam.fit)),metric = "RMSE")
+
+
+```
+
+According to the boxplot, the GAM (using caret) has smaller RMSE than the MARS does. 
+
+## (e) Based on the above GAM and MARS models, predict the out-of-state tuition of Columbia University.
 
 
 
