@@ -13,7 +13,8 @@ library(caret)
 library(splines)
 library(lasso2)
 library(mgcv)
-
+library(pdp)
+library(earth)
 
 ```
 
@@ -83,11 +84,89 @@ From the plot, the scatter plot shown in green points is the train dataset of co
 
 ## (c) Fit a generalized additive model (GAM) using all the predictors. Plot the results and explain your ﬁndings.
 
-```{r}
+Use gam():
 
+```{r}
+gam.m1 <- gam(outstate~apps+accept+enroll+top10perc+top25perc+
+                f_undergrad+p_undergrad+room_board+books+personal+ph_d+
+                terminal+s_f_ratio+perc_alumni+expend+grad_rate,
+              data=train_college)
+gam.m2 <- gam(outstate~apps+accept+enroll+top10perc+top25perc+
+                f_undergrad+p_undergrad+room_board+books+personal+ph_d+
+                s(terminal)+s_f_ratio+perc_alumni+expend+grad_rate,
+              data=train_college)
+gam.m3 <- gam(outstate~apps+accept+ph_d+top10perc+top25perc+
+                f_undergrad+p_undergrad+books+personal+
+                s(terminal)+s_f_ratio+te(expend,enroll)+
+                perc_alumni+room_board+grad_rate,
+              data=train_college)
+
+anova(gam.m1,gam.m2,gam.m3,test = "F")
+
+plot(gam.m2)
+
+vis.gam(gam.m3,view = c("expend","enroll"),
+        plot.type = "contour",color="topo")
 
 ```
 
+Use caret:
+
+```{r}
+ctrl1 <- trainControl(method="cv",number=5)
+
+set.seed(7)
+gam.fit <- train(x,y,
+                 method="gam",
+                 tuneGrid = data.frame(method = "GCV.Cp",select=c(TRUE,FALSE)),
+                 trControl = ctrl1)
+
+gam.fit$bestTune
+gam.fit$results
+
+gam.fit$finalModel
+
+```
+
+I separately use gam() and caret to build models to estimate the relationship between the outstate and predictors.
+
+From the results of using caret, we can see the output of bestTune showed that selecting "False" is better than selecting "True". The results of gam.fit also showed that rmse of selecting "false" is smaller than that of selecting "true". I think it may be caused by loss of significant amount of flexibility in mgcv.From the final model of gam.fit, it added smooth function to every variable. Both df and GCV score are very large.
+
+In anova test of three gam(), the model 2 with smoothed terminal has df = 4.6295, which is approximate to the df obtained by using smoothe spline model on terminal only. It has smaller deviance than model 3. The result of caret may indicate there are some potential tensor interaction between predictors. 
+
+
+## Fit a multivariate adaptive regression spline (MARS) model using all the predictors. Report the ﬁnal model. Present the partial dependence plot of an arbitrary predictor in your ﬁnal model.
+
+
+```{r}
+mars_grid <- expand.grid(degree=1:2,
+                         nprune=2:18)
+
+set.seed(7)
+mars.fit <- train(x,y,
+                  method = "earth",
+                  tuneGrid = mars_grid,
+                  trControl = ctrl1)
+
+ggplot(mars.fit)
+
+mars.fit$bestTune
+
+coef(mars.fit$finalModel)
+
+```
+
+The final model using MARS:
+
+f(x) = 11157.33 - 0.6964h(expend-15365) - 1.2722h(4450-room_board) - 242.9852h(grad_rate-97) - 24.1381h(97-grad_rate) - 0.3567h(f_undergrad-1355) - 1.7564h(1355-f_undergrad) - 77.0360h(22-perc_alumni) + 7.0815h(apps-3712) + 1.0493h(1300-personal) + 5.2945h(913-enroll) - 1.9952h(2193-accept) + 0.6896h(expend-6881) - 6.7394h(apps-3877) - 97.7224h(s_f_ratio-10.1) + 222.5914h(s_f_ratio-17.8)
+
+
+```{r}
+p1 <- pdp::partial(mars.fit,pred.var=c("s_f_ratio"),grid.resolution=10) %>% 
+  autoplot()
+
+p1
+```
 
 
 
