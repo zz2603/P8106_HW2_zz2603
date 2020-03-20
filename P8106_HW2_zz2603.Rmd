@@ -20,7 +20,7 @@ library(earth)
 
 
 
-```{r}
+```{r message=FALSE}
 college <- read_csv("./College.csv") %>% janitor::clean_names()
 
 train_college <- filter(college,college!="Columbia University")
